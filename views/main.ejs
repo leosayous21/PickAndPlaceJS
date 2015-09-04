@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="icon" href="/favicon.ico">
+
+<title>Pick and place<</title>
+
+<!-- Bootstrap core CSS -->
+<link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Custom styles for this template -->
+<link href="/bootstrap/css/jumbotron.css" rel="stylesheet">
+
+
+
+</head>
+
+<body>
+<div class="container">
+
+    <p id="info"></p>
+    <div class="row" style="margin-top:10px;"  >
+        <img id="camera" class="img-responsive" width=1000  src="">
+        
+    </div>
+</div>
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="/js/jquery-1.11.min.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+$(document).ready(function() {
+
+    var socket = io.connect('http://192.168.0.4:8080');
+
+  socket.on('image', function(info){
+             if(info.image)
+             {
+            document.getElementById("camera").src = 'data:image/jpeg;base64,' + info.buffer;
+            $('img#camera').attr('src', 'data:image/jpeg;base64,' + info.buffer);
+            
+            
+             }});
+
+  });
+              
+
+                  
+                  
+</script>
+
+</body>
+</html>
+

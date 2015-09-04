@@ -1,0 +1,8 @@
+{
+    "websiteName": "Portail Idron",
+    "websitePushID": "web.idron.local",
+    "allowedDomains": ["http://192.168.1.32/"],
+    "urlFormatString": "http://192.168.1.32/notification",
+    "authenticationToken": "19f8d7a6e9fb8a7f6d9330dabe",
+    "webServiceURL": "http://192.168.1.32/push"
+}
