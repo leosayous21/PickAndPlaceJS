@@ -25,9 +25,13 @@
 <div class="container">
 
     <p id="info"></p>
-    <div class="row" style="margin-top:10px;"  >
+    <div class="row" style=""  >
         <img id="camera" class="img-responsive" width=1000  src="">
         
+    </div>
+    <div class="row" style=""  >
+        <img id="camera2" class="img-responsive" width=1000  src="">
+
     </div>
 </div>
 <!-- Bootstrap core JavaScript
@@ -46,11 +50,18 @@ $(document).ready(function() {
   socket.on('image', function(info){
              if(info.image)
              {
-            document.getElementById("camera").src = 'data:image/jpeg;base64,' + info.buffer;
             $('img#camera').attr('src', 'data:image/jpeg;base64,' + info.buffer);
             
             
              }});
+
+    socket.on('image2', function(info){
+        if(info.image)
+        {
+            $('img#camera2').attr('src', 'data:image/jpeg;base64,' + info.buffer);
+
+
+        }});
 
   });
               
