@@ -25,14 +25,48 @@
 <div class="container">
 
     <p id="info"></p>
-    <div class="row" style=""  >
-        <img id="camera" class="img-responsive" width=1000  src="">
-        
+    <div class="row" >
+        <div class="col-sm-4" >
+            <img id="camera" class="img-responsive" width=1000 >
+        </div>
+        <div class="col-sm-4" >
+            <img id="camera2" class="img-responsive" width=1000 >
+
+        </div>
+        <div class="col-sm-4">
+            <div class="row">
+            <button type="button" id="moveNegativeX" class="btn btn-primary" >
+                move X -1
+            </button>
+            <button type="button" id="goToZeroX" class="btn btn-primary" >
+                go to 0
+            </button>
+            <button type="button" id="moveX" class="btn btn-primary" >
+                move X 0.3
+            </button>
+            </div>
+            <div class="row" style="margin-top:20px;">
+                <button type="button" id="moveNegativeY" class="btn btn-primary" >
+                    move Y -1
+                </button>
+                <button type="button" id="goToZeroY" class="btn btn-primary" >
+                    go to 0
+                </button>
+                <button type="button" id="moveY" class="btn btn-primary" >
+                    move Y 0.3
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="row" style=""  >
-        <img id="camera2" class="img-responsive" width=1000  src="">
+
+    <div class="row" >
+        <div id="chart" style="width:600px;height:600px;"></div>
+    </div>
+    <div class="row">
+
 
     </div>
+
 </div>
 <!-- Bootstrap core JavaScript
 ================================================== -->
@@ -62,13 +96,70 @@ $(document).ready(function() {
 
 
         }});
+    socket.on('point', function(point){
+            addPoint(point)
+    });
 
-  });
-              
+    var trace1 = {
+        x: [],
+        y: [],
+        mode: 'markers',
+        type: 'scatter'
+    };
 
-                  
-                  
+    var trace2 = {
+        x: [],
+        y: [],
+        mode: 'markers',
+        type: 'scatter'
+    };
+
+    var data = [trace1, trace2];
+
+    function addPoint(point){
+        data[0].x.push(point.x);
+        data[0].y.push(point.y);
+        Plotly.newPlot('chart', data);
+
+        socket.emit("moveRelativeY", 0.05);
+    }
+
+    //X Axis
+    $("#goToZeroX").click(function(){
+        socket.emit("moveAbsoluteX", 0);
+    });
+
+    $("#moveX").click(function(){
+        socket.emit("moveRelativeX", 0.3);
+    });
+    $("#moveNegativeX").click(function(){
+        socket.emit("moveRelativeX", -1);
+    });
+
+    //Y Axis
+    $("#goToZeroY").click(function(){
+        socket.emit("moveAbsoluteY", 0);
+    });
+
+    $("#moveY").click(function(){
+        socket.emit("moveRelativeY", 0.3);
+    });
+    $("#moveNegativeY").click(function(){
+        socket.emit("moveRelativeY", -1);
+    });
+});
+
+
 </script>
+
+<script type="text/javascript" src="js/plotly/dependencies/d3.v3.min.js"></script>
+<script type="text/javascript" src="js/plotly/dependencies/jquery-latest.js"></script>
+<script type="text/javascript" src="js/plotly/plotly.min.js"></script>
+
+
+<!--
+    And then you are ready to make plots!
+-->
 
 </body>
 </html>

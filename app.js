@@ -43,7 +43,21 @@ var io = require('socket.io')(server);
 
 io.sockets.on('connection', function (socket) {
 
+    socket.on('moveRelativeX', function(message){
+        grbl.moveRelativeX(message);
+    });
 
+    socket.on('moveAbsoluteX', function(message){
+        grbl.moveAbsoluteX(message);
+    });
+
+    socket.on('moveRelativeY', function(message){
+        grbl.moveRelativeY(message);
+    });
+
+    socket.on('moveAbsoluteY', function(message){
+        grbl.moveAbsoluteY(message);
+    });
 });
 
 
@@ -52,6 +66,9 @@ var cameraCallback=function(err, im) {
     if (err) throw err;
     //im.save('original' + i + '.jpg');
     console.log("image"+imageNumber);
+
+    //correct the angle rotation
+    im=cameraCorrection(im);
 
 
     imageNumber++;
@@ -69,20 +86,17 @@ var cameraCallback=function(err, im) {
 camera.read(cameraCallback);
 
 function cameraCorrection(image){
-    return image;
-    var angleCorrection=0;
+    var angleCorrection= -3.0053;
     image.rotate(angleCorrection);
 
 
-    for(var i=0; i<io.sockets.sockets.length; i++){
-        io.sockets.sockets[i].volatile.emit('image2', { image: true, buffer: image.toBuffer().toString('base64')});
-    }
 
-    var dy=parseInt(Math.sin(angleCorrection/180*Math.PI)*camHeight);
-    var dx=parseInt(Math.sin(angleCorrection/180*Math.PI)*camWidth);
+    var dy=parseInt(Math.sin(Math.abs(angleCorrection)/180*Math.PI)*camHeight);
+    var dx=parseInt(Math.sin(Math.abs(angleCorrection)/180*Math.PI)*camWidth);
 
-    console.log(dx+";"+dy+";"+(camWidth-2*dx)+";"+(camHeight-2*dy));
-    return image.crop(dx, dy, camWidth-2*dx, camHeight-2*dy);
+    var newImage=image.crop(dx, dy, camWidth-2*dx, camHeight-2*dy);
+    newImage.rotate(-90);
+    return newImage;
 }
 
 
@@ -147,6 +161,13 @@ function circleCalibration(im){
         io.sockets.sockets[i].volatile.emit('image2', { image: true, buffer: im.toBuffer().toString('base64')});
     }
 
+    if(imageNumber%5==0) {
+
+        if(number==0)
+            return ancienneImage;
+
+        io.sockets.emit("point", {x: x_mean, y: y_mean});
+    }
     return ancienneImage;
 }
 
@@ -171,3 +192,4 @@ function circleCalibration(im){
     return ancienneImage;
 }*/
 
+var grbl=require("./grbl");
