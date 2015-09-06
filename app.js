@@ -22,11 +22,15 @@ app.use(morgan('dev')) // Active le middleware de logging
 
 
 //recupere les routes
-app.get('/', function(req, res) {
+app.get('/calibration', function(req, res) {
         res.setHeader('Content-Type', 'text/html');
-        res.render('main.ejs',  {random:Math.random()});
+        res.render('calibration.ejs',  {random:Math.random()});
         });
 
+app.get('/', function(req, res) {
+    res.setHeader('Content-Type', 'text/html');
+    res.render('main.ejs',  {random:Math.random()});
+});
 
 
 app.use(function(req, res, next){
