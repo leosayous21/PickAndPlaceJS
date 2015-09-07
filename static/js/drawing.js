@@ -6,8 +6,8 @@ $(document).ready(function () {
 });
 
 var grid={
-    width:3000,
-    height:3000,
+    width:6000,
+    height:6000,
     xOffset:0,
     yOffset:0,
     size:1

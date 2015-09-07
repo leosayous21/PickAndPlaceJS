@@ -47,6 +47,8 @@ var io = require('socket.io')(server);
 
 io.sockets.on('connection', function (socket) {
 
+    socket.emit('begin', null);
+
     socket.on('moveRelativeX', function(message){
         grbl.moveRelativeX(message);
     });
@@ -62,16 +64,30 @@ io.sockets.on('connection', function (socket) {
     socket.on('moveAbsoluteY', function(message){
         grbl.moveAbsoluteY(message);
     });
+
+    socket.on("getCurrentStatus", function(message){
+        grbl.getCurrentStatus();
+    });
+
+    socket.on("setCalibration", function(message){
+        calibration=message;
+        console.log("calibration="+message);
+    });
+
+    socket.on("getImage", function(message){
+        getLastImage(message);
+    });
 });
 
 
 var imageNumber=0;
 var calibration=false;
 var position={x:0, y:0};
+var lastImage=null;
 var cameraCallback=function(err, im) {
     if (err) throw err;
     //im.save('original' + i + '.jpg');
-    console.log("image"+imageNumber);
+    //console.log("image"+imageNumber);
 
     //correct the angle rotation
     im=cameraCorrection(im);
@@ -79,29 +95,32 @@ var cameraCallback=function(err, im) {
 
     imageNumber++;
 
+    position.x=im.width()*(imageNumber%14);
+    position.y=im.height()*parseInt(imageNumber/14);
+
+    lastImage=im;
+
+
+
     if(calibration)
     {
         var imageWithCalibratedPoint=circleCalibration(im);
-        for(var i=0; i<io.sockets.sockets.length; i++){
-            io.sockets.sockets[i].volatile.emit('image2', { image: true, buffer: imageWithCalibratedPoint.toBuffer().toString('base64')});
-        }
+        io.sockets.emit('image2', { image: true, buffer: imageWithCalibratedPoint.toBuffer().toString('base64'), position:position});
+
+        io.sockets.emit('image', { image: true, buffer: lastImage.toBuffer().toString('base64'), position:position});
+
     }
 
-    position.x=im.width()*(imageNumber%7);
-    position.y=im.height()*parseInt(imageNumber/7);
 
-    for(var i=0; i<io.sockets.sockets.length; i++){
-        io.sockets.sockets[i].volatile.emit('image', { image: true, buffer: im.toBuffer().toString('base64'), position:position});
-    }
 
-    if(imageNumber>35)
+    if(imageNumber>140)
     {
         imageNumber=0;
     }
 
 
     //we restart the function
-    setTimeout(function(){camera.read(cameraCallback);}, 300);
+    setTimeout(function(){camera.read(cameraCallback);}, 100);
 };
 
 camera.read(cameraCallback);
@@ -115,7 +134,8 @@ function cameraCorrection(image){
     var dy=parseInt(Math.sin(Math.abs(angleCorrection)/180*Math.PI)*camHeight);
     var dx=parseInt(Math.sin(Math.abs(angleCorrection)/180*Math.PI)*camWidth);
 
-    var newImage=image.crop(dx, dy, camWidth-2*dx, camHeight-2*dy);
+    //var newImage=image.crop(dx, dy, camWidth-2*dx, camHeight-2*dy);
+    var newImage=image.crop(170, 90, 300, 300);
     newImage.rotate(-90);
     return newImage;
 }
@@ -134,17 +154,17 @@ cv.readImage('./files/coin1.jpg', function(err, im) {
 
 });
 function circleCalibration(im){
-    var ancienneImage=im.clone();
-    im.medianBlur(5);
-    im.inRange(lower_threshold, upper_threshold);
+    var image=im.clone();
+    image.medianBlur(5);
+    image.inRange(lower_threshold, upper_threshold);
 
     var x_mean=0;
     var y_mean=0;
     var number=0;
-    for(var x=0; x<im.height(); x+=3)
+    for(var x=0; x<image.height(); x+=3)
     {
-        for(var y=0; y<im.width(); y+=3) {
-            if (im.pixel(x, y) == 0) {
+        for(var y=0; y<image.width(); y+=3) {
+            if (image.pixel(x, y) == 0) {
                 x_mean+=x;
                 y_mean+=y;
                 number++;
@@ -155,21 +175,23 @@ function circleCalibration(im){
         x_mean = x_mean / number;
         y_mean = y_mean / number;
     }
-    console.log(number);
-    im.ellipse(y_mean, x_mean, 2,2, RED, 3);
+    //console.log(number);
+    image.ellipse(y_mean, x_mean, 2,2, RED, 3);
 
 
 
-    if(imageNumber%5==0) {
+    if(number==0)
+        return image;
 
-        if(number==0)
-            return;
+    io.sockets.emit("point", {x: x_mean, y: y_mean});
 
-        io.sockets.emit("point", {x: x_mean, y: y_mean});
-    }
-    return;
+    return image;
 }
 
+
+function getLastImage(position){
+    io.sockets.emit('image', { image: true, buffer: lastImage.toBuffer().toString('base64'), position:position});
+}
 /*
 function circleCalibration(im){
     var ancienneImage=im.clone();

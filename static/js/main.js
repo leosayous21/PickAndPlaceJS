@@ -14,6 +14,38 @@ $(document).ready(function () {
 
         }});
 
+    socket.on('begin', function(mesage){
+        socket.emit("setCalibration", false);
+    });
 
+    var xPicture=0;
+    var yPicture=0;
+    $("#startX").click(function(){
+        socket.emit("getImage", {x:xPicture, y:yPicture});
+        socket.emit("moveRelativeX", 6);
+        xPicture+=375.26*6/9;
+
+
+
+    });
+
+    $("#startY").click(function(){
+        socket.emit("getImage", {x:xPicture, y:yPicture});
+        socket.emit("moveAbsoluteX", 0);
+        xPicture=4;
+        setTimeout(function(){
+            socket.emit("moveRelativeY", -6);
+            yPicture+=375.26*6/9;
+        }, 500);
+
+
+    });
+
+    $("#goZero").click(function(){
+        socket.emit("moveAbsoluteX", 0);
+        socket.emit("moveAbsoluteY", 0);
+        xPicture=0;
+        yPicture=0;
+    });
 
 });

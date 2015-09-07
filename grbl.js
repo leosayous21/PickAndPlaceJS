@@ -12,7 +12,14 @@ serialPortGrbl.open(function (error) {
 
     serialPortGrbl.on('data', function (data) {
         //data reçu on va les traiter!
-        console.log("grbl data:"+data);
+        if(data=="ok")
+        {
+            serialPortGrbl.write("?\r");
+        }
+        else
+        {
+            console.log(data.toString());
+        }
     });
 });
 
@@ -48,3 +55,7 @@ function moveAbsoluteY(distance){
 }
 exports.moveAbsoluteY=moveAbsoluteY;
 
+function getCurrentStatus(){
+    serialPortGrbl.write("?\r");
+}
+exports.getCurrentStatus=getCurrentStatus;
