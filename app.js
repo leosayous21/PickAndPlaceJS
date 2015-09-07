@@ -66,6 +66,8 @@ io.sockets.on('connection', function (socket) {
 
 
 var imageNumber=0;
+var calibration=false;
+var position={x:0, y:0};
 var cameraCallback=function(err, im) {
     if (err) throw err;
     //im.save('original' + i + '.jpg');
@@ -77,14 +79,29 @@ var cameraCallback=function(err, im) {
 
     imageNumber++;
 
+    if(calibration)
+    {
+        var imageWithCalibratedPoint=circleCalibration(im);
+        for(var i=0; i<io.sockets.sockets.length; i++){
+            io.sockets.sockets[i].volatile.emit('image2', { image: true, buffer: imageWithCalibratedPoint.toBuffer().toString('base64')});
+        }
+    }
+
+    position.x=im.width()*(imageNumber%7);
+    position.y=im.height()*parseInt(imageNumber/7);
+
     for(var i=0; i<io.sockets.sockets.length; i++){
-        io.sockets.sockets[i].volatile.emit('image', { image: true, buffer: circleCalibration(im).toBuffer().toString('base64')});
+        io.sockets.sockets[i].volatile.emit('image', { image: true, buffer: im.toBuffer().toString('base64'), position:position});
+    }
+
+    if(imageNumber>35)
+    {
+        imageNumber=0;
     }
 
 
-
     //we restart the function
-    camera.read(cameraCallback);
+    setTimeout(function(){camera.read(cameraCallback);}, 300);
 };
 
 camera.read(cameraCallback);
@@ -121,26 +138,6 @@ function circleCalibration(im){
     im.medianBlur(5);
     im.inRange(lower_threshold, upper_threshold);
 
-    /*
-    var ancienneImage=im.clone();
-    im.convertGrayscale();
-    im.medianBlur(5);
-
-    var circles=im.houghCircles(2, 30, 50, 240, 20, 130);
-
-
-
-    for(var i=0; i<circles.length; i++)
-    {
-        var rayon=circles[i][2];
-        ancienneImage.ellipse(circles[i][0], circles[i][1], 2,2, RED, 3);
-        ancienneImage.ellipse(circles[i][0], circles[i][1], rayon, rayon, GREEN, 3);
-    }
-    console.log(circles);
-    */
-/*
-    var contours = im.findContours();
-    console.log(contours);*/
     var x_mean=0;
     var y_mean=0;
     var number=0;
@@ -159,20 +156,18 @@ function circleCalibration(im){
         y_mean = y_mean / number;
     }
     console.log(number);
-    ancienneImage.ellipse(y_mean, x_mean, 2,2, RED, 3);
+    im.ellipse(y_mean, x_mean, 2,2, RED, 3);
 
-    for(var i=0; i<io.sockets.sockets.length; i++){
-        io.sockets.sockets[i].volatile.emit('image2', { image: true, buffer: im.toBuffer().toString('base64')});
-    }
+
 
     if(imageNumber%5==0) {
 
         if(number==0)
-            return ancienneImage;
+            return;
 
         io.sockets.emit("point", {x: x_mean, y: y_mean});
     }
-    return ancienneImage;
+    return;
 }
 
 /*
