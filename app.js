@@ -65,6 +65,15 @@ io.sockets.on('connection', function (socket) {
         grbl.moveAbsoluteY(message);
     });
 
+    socket.on('moveRelative', function(message){
+        grbl.moveRelative(message);
+    });
+
+    socket.on('moveAbsolute', function(message){
+        grbl.moveAbsolute(message);
+    });
+
+
     socket.on("getCurrentStatus", function(message){
         grbl.getCurrentStatus();
     });
@@ -77,6 +86,12 @@ io.sockets.on('connection', function (socket) {
     socket.on("getImage", function(message){
         getLastImage(message);
     });
+
+    socket.on("setGrayThreshold", function(message){
+        //BGR
+        lower_threshold = [message.lower.B, message.lower.G, message.lower.R];
+        upper_threshold = [message.upper.B, message.upper.G, message.upper.R];
+    })
 });
 
 
@@ -146,8 +161,9 @@ var WHITE = [255, 255, 255]; // B, G, R
 var RED   = [0, 0, 255]; // B, G, R
 
 
+var grayThreshold = 80;
 // (B)lue, (G)reen, (R)ed
-var lower_threshold = [80,80,80];
+var lower_threshold = [grayThreshold,grayThreshold,grayThreshold];
 var upper_threshold = [255,255,255];
 
 cv.readImage('./files/coin1.jpg', function(err, im) {

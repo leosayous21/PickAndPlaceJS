@@ -48,4 +48,8 @@ $(document).ready(function () {
         yPicture=0;
     });
 
+    $("#saveImage").click(function(){
+        
+    });
+
 });

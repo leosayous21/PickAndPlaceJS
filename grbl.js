@@ -26,6 +26,7 @@ serialPortGrbl.open(function (error) {
 var x=0;
 var y=0;
 
+// X AXIS
 function moveRelativeX(distance){
     x+=distance;
     serialPortGrbl.write("G0 X"+x+"\r");
@@ -41,6 +42,7 @@ function moveAbsoluteX(distance){
 exports.moveAbsoluteX=moveAbsoluteX;
 
 
+// Y AXIS
 function moveRelativeY(distance){
     y+=distance;
     serialPortGrbl.write("G0 Y"+y+"\r");
@@ -55,6 +57,26 @@ function moveAbsoluteY(distance){
 }
 exports.moveAbsoluteY=moveAbsoluteY;
 
+
+//BOTH AXIS
+function moveRelative(distance){
+    y+=distance.y;
+    x+=distance.x;
+    serialPortGrbl.write("G0 X"+x+" Y"+y+"\r");
+
+
+}
+exports.moveRelative=moveRelative;
+
+function moveAbsolute(distance){
+    y=distance.y;
+    x=distance.x;
+    serialPortGrbl.write("G0 X"+x+" Y"+y+"\r");
+}
+exports.moveAbsolute=moveAbsolute;
+
+
+//Curent status !
 function getCurrentStatus(){
     serialPortGrbl.write("?\r");
 }

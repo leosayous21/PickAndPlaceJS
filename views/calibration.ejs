@@ -88,6 +88,13 @@
                 <button type="button" id="getCurrentStatus" class="btn btn-primary">
                     get current status
                 </button>
+                <button type="button" id="setGrayThreshold" class="btn btn-primary">
+                    set gray threshold
+                </button>
+                <button type="button" id="startCalibration" class="btn btn-primary" >
+                    start Calibration
+                </button>
+
             </div>
         </div>
     </div>
@@ -97,6 +104,7 @@
             <div id="chart" style="width:600px;height:600px;"></div>
         </div>
         <div class="col-sm-4">
+            <p id="current"></p>
             <p id="infos"></p>
         </div>
     </div>
@@ -161,7 +169,7 @@ $(document).ready(function() {
         if(savePoint) {
             data[currentDataIndex].x.push(point.x);
             data[currentDataIndex].y.push(point.y);
-            Plotly.newPlot('chart', data);
+            $("#current").html("point number: "+data[currentDataIndex].x.length);
         }
 
         if(moveXCalibration)
@@ -221,6 +229,79 @@ $(document).ready(function() {
 
     $("#stopPoint").click(function(){
         savePoint=false;
+
+    });
+
+    $("#getCurrentStatus").click(function(){
+        socket.emit("getCurrentStatus", null);
+    });
+
+    $("#setGrayThreshold").click(function(){
+        var lower=prompt("Lower B-G-R [0-255]").split("-");
+        var upper=prompt("Lower B-G-R [0-255]").split("-");
+        socket.emit("setGrayThreshold", {
+            lower:{B:parseInt(lower[0]), G:parseInt(lower[1]), R:parseInt(lower[2])},
+            upper:{B:parseInt(upper[0]), G:parseInt(upper[1]), R:parseInt(upper[2])}});
+    });
+
+    $("#startCalibration").click(function(){
+        savePoint=true;
+        setTimeout(function(){calibration();}, 100);
+    });
+
+    var points=[];
+    function calibration(){
+        //if we have more than 50 points
+        if(data[currentDataIndex].x.length>100)
+        {
+            //we stopped saving points
+            savePoint=false;
+            //we calculate the mean
+            var mean=calculateMean();
+            points.push(mean);
+
+            $("#infos").append(points[currentDataIndex].x+";"+points[currentDataIndex].y+"<br/>");
+
+            //we draw the graph
+            Plotly.newPlot('chart', data);
+
+            //we add a new data cell for the graph
+            data.push({
+                x: [],
+                y: [],
+                mode: 'markers',
+                type: 'scatter'});
+            currentDataIndex++;
+
+            //we need to change our location: (X translation)
+            if(currentDataIndex==1)
+            {
+                socket.emit("moveRelative", {x:-4,y:0});
+                setTimeout(function(){savePoint=true}, 1500);
+            }
+            else if(currentDataIndex==2){
+                socket.emit("moveRelative", {x:0,y:4});
+                setTimeout(function(){savePoint=true}, 1500);
+            }
+            else if(currentDataIndex==3){
+                //we need to calculate our basis !
+                var distanceX=Math.sqrt(Math.pow(points[1].x-points[0].x,2)+Math.pow(points[1].y-points[0].y,2));
+                $("#infos").append("ratio pixel/mm axes X: "+distanceX+"/4 ="+distanceX/4+"<br/>");
+
+                var distanceY=Math.sqrt(Math.pow(points[2].x-points[1].x,2)+Math.pow(points[2].y-points[1].y,2));
+                $("#infos").append("ratio pixel/mm axes Y: "+distanceY+"/4 ="+distanceY/4+"<br/>");
+
+                $("#infos").append("deviation y pixel/mm axes X: "+(points[1].x-points[0].x)+"/4 ="+(points[1].x-points[0].x)/4+"<br/>");
+
+                $("#infos").append("deviation x pixel/mm axes Y: "+(points[2].y-points[1].y)+"/4 ="+(points[2].y-points[1].y)/4+"<br/>");
+
+            }
+        }
+        setTimeout(function(){calibration();}, 100);
+    }
+
+
+    function calculateMean(){
         var xMean=0,yMean=0,number=0;
 
         for(var i=0; i<data[currentDataIndex].x.length; i++)
@@ -232,19 +313,8 @@ $(document).ready(function() {
         xMean=xMean/number;
         yMean=yMean/number;
 
-        $("#infos").append(xMean+";"+yMean+"<br/>");
-        currentDataIndex++;
-
-        data.push({
-            x: [],
-            y: [],
-            mode: 'markers',
-            type: 'scatter'});
-    });
-
-    $("#getCurrentStatus").click(function(){
-        socket.emit("getCurrentStatus", null);
-    });
+        return {x:xMean, y:yMean};
+    }
 });
 
 
