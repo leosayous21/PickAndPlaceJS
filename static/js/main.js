@@ -1,3 +1,7 @@
+var xCalibration=42.90325476;
+var yCalibration=41.98230363;
+var xDeviationSurY=0.2818341638;
+
 $(document).ready(function () {
 
     var socket = io.connect('http://192.168.0.4:8080');
@@ -23,7 +27,7 @@ $(document).ready(function () {
     $("#startX").click(function(){
         socket.emit("getImage", {x:xPicture, y:yPicture});
         socket.emit("moveRelativeX", 6);
-        xPicture+=375.26*6/9;
+        xPicture+=6*yCalibration;
 
 
 
@@ -32,10 +36,10 @@ $(document).ready(function () {
     $("#startY").click(function(){
         socket.emit("getImage", {x:xPicture, y:yPicture});
         socket.emit("moveAbsoluteX", 0);
-        xPicture=4;
+        xPicture=xDeviationSurY*yPicture/yCalibration;
         setTimeout(function(){
             socket.emit("moveRelativeY", -6);
-            yPicture+=375.26*6/9;
+            yPicture+=6*yCalibration;
         }, 500);
 
 
@@ -49,7 +53,8 @@ $(document).ready(function () {
     });
 
     $("#saveImage").click(function(){
-        
+        var img = imageCanvas.toDataURL("image/png");
+        socket.emit("saveImage", img);
     });
 
 });

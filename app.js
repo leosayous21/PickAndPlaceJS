@@ -1,7 +1,7 @@
 var express = require('express');
 var morgan = require('morgan'); // Charge le middleware de logging
 var favicon = require('serve-favicon'); // Charge le middleware de favicon
-
+var fs=require("fs");
 var app = express();
 
 
@@ -91,7 +91,18 @@ io.sockets.on('connection', function (socket) {
         //BGR
         lower_threshold = [message.lower.B, message.lower.G, message.lower.R];
         upper_threshold = [message.upper.B, message.upper.G, message.upper.R];
-    })
+    });
+
+    socket.on("saveImage", function(message){
+        var base64Data = message.replace(/^data:image\/png;base64,/, "");
+
+        fs.writeFile("saved.png", base64Data, 'base64', function(err) {
+            if(err)
+            console.log(err);
+            else
+            console.log("Image saved successfully !");
+        });
+    });
 });
 
 
