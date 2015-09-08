@@ -1,3 +1,4 @@
+//need to be loaded from the server
 var xCalibration=42.90325476;
 var yCalibration=41.98230363;
 var xDeviationSurY=0.2818341638;
@@ -27,7 +28,7 @@ $(document).ready(function () {
     $("#startX").click(function(){
         socket.emit("getImage", {x:xPicture, y:yPicture});
         socket.emit("moveRelativeX", 6);
-        xPicture+=6*yCalibration;
+        xPicture+=6*xCalibration;
 
 
 
@@ -46,8 +47,7 @@ $(document).ready(function () {
     });
 
     $("#goZero").click(function(){
-        socket.emit("moveAbsoluteX", 0);
-        socket.emit("moveAbsoluteY", 0);
+        socket.emit("moveAbsolute", {x:0,y:0});
         xPicture=0;
         yPicture=0;
     });
@@ -57,4 +57,18 @@ $(document).ready(function () {
         socket.emit("saveImage", img);
     });
 
+
+    var z=0;
+    $("#grid_canvas").click(function(){
+       if(z==0)
+       {
+           socket.emit("moveAbsoluteZ", 20);
+           z=20;
+       }
+        else
+       {
+           socket.emit("moveAbsoluteZ", 0);
+           z=0;
+       }
+    });
 });

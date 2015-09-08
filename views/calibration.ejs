@@ -301,6 +301,42 @@ $(document).ready(function() {
     }
 
 
+    var points=[];
+    function calibrationPulley(){
+        //if we have more than 50 points
+        if(data[currentDataIndex].x.length>100)
+        {
+            //we stopped saving points
+            savePoint=false;
+            //we calculate the mean
+            var mean=calculateMean();
+            points.push(mean);
+
+            $("#infos").append(points[currentDataIndex].x+";"+points[currentDataIndex].y+"<br/>");
+
+            //we draw the graph
+            Plotly.newPlot('chart', data);
+
+            //we add a new data cell for the graph
+            data.push({
+                x: [],
+                y: [],
+                mode: 'markers',
+                type: 'scatter'});
+            currentDataIndex++;
+
+            //we need to change our location: (X translation)
+
+            if(currentDataIndex==1)
+            {
+                socket.emit("moveRelative", {x:-4,y:0});
+                setTimeout(function(){savePoint=true}, 1500);
+            }
+        }
+        setTimeout(function(){calibrationPulley();}, 100);
+    }
+
+
     function calculateMean(){
         var xMean=0,yMean=0,number=0;
 

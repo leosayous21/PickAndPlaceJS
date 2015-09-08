@@ -25,6 +25,7 @@ serialPortGrbl.open(function (error) {
 
 var x=0;
 var y=0;
+var z=0;
 
 // X AXIS
 function moveRelativeX(distance){
@@ -56,6 +57,14 @@ function moveAbsoluteY(distance){
     serialPortGrbl.write("G0 Y"+y+"\r");
 }
 exports.moveAbsoluteY=moveAbsoluteY;
+
+//Z AXIS
+function moveAbsoluteZ(distance){
+    z=distance;
+    serialPortGrbl.write("G0 Z"+distance+"\r");
+}
+exports.moveAbsoluteZ=moveAbsoluteZ;
+
 
 
 //BOTH AXIS

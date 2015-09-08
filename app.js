@@ -65,6 +65,10 @@ io.sockets.on('connection', function (socket) {
         grbl.moveAbsoluteY(message);
     });
 
+    socket.on('moveAbsoluteZ', function(message){
+        grbl.moveAbsoluteZ(message);
+    });
+
     socket.on('moveRelative', function(message){
         grbl.moveRelative(message);
     });
