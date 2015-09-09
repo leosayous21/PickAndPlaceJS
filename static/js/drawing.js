@@ -58,12 +58,31 @@ function draw(){
     drawBackgroundGrid();
 }
 
+function drawAllImages(){
+    ctx_image.clearRect(-100, -100,  imageCanvas.width+100,  imageCanvas.height+100);
+
+    for(var k=0; k<allImages.length; k++) {
+        (function(_k) {
+
+            var info = allImages[_k];
+            var img = new Image();
+            img.src = 'data:image/jpeg;base64,' + info.buffer;
+            img.onload = function () {
+                ctx_image.drawImage(img, info.position.i * xMove_mm * xCalibration, info.position.j * yMove_mm * yCalibration);
+                img = null;
+            }
+        })(k);
+    }
+
+    draw();
+
+}
+
 function drawImage(image, x,y){
     x=typeof x !== 'undefined' ? x : 0;
     y=typeof y !== 'undefined' ? y : 0;
 
-
-    ctx_image.drawImage(image, x, y);
+    ctx_image.drawImage(image, x*xMove_mm*xCalibration, y*yMove_mm*yCalibration);
 
     draw();
 }

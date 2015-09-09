@@ -156,7 +156,7 @@ var cameraCallback=function(err, im) {
 camera.read(cameraCallback);
 
 function cameraCorrection(image){
-    var angleCorrection= -3.0053;
+    var angleCorrection= -3.1211736135166186;
     image.rotate(angleCorrection);
 
 

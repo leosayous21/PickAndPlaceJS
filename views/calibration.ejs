@@ -94,6 +94,10 @@
                 <button type="button" id="startCalibration" class="btn btn-primary" >
                     start Calibration
                 </button>
+                <button type="button" id="startCalibrationXAxis" class="btn btn-primary" >
+                    start Calibration X Axis
+                </button>
+
 
             </div>
         </div>
@@ -249,10 +253,15 @@ $(document).ready(function() {
         setTimeout(function(){calibration();}, 100);
     });
 
+    $("#startCalibrationXAxis").click(function(){
+        savePoint=true;
+        setTimeout(function(){calibrationPulley();}, 100);
+    });
+
     var points=[];
     function calibration(){
         //if we have more than 50 points
-        if(data[currentDataIndex].x.length>100)
+        if(data[currentDataIndex].x.length>50)
         {
             //we stopped saving points
             savePoint=false;
@@ -274,27 +283,72 @@ $(document).ready(function() {
             currentDataIndex++;
 
             //we need to change our location: (X translation)
-            if(currentDataIndex==1)
-            {
-                socket.emit("moveRelative", {x:-4,y:0});
-                setTimeout(function(){savePoint=true}, 1500);
+            for(var i=1; i<=4; i++) {
+                if (currentDataIndex == i) {
+
+
+                    socket.emit("moveRelative", {x: -1, y: 0});
+                    setTimeout(function () {
+                        savePoint = true
+                    }, 1500);
+                }
             }
-            else if(currentDataIndex==2){
-                socket.emit("moveRelative", {x:0,y:4});
-                setTimeout(function(){savePoint=true}, 1500);
+
+            for(var i=5; i<=8; i++) {
+                if (currentDataIndex == i) {
+
+
+                    socket.emit("moveRelative", {x: 0, y: 1});
+                    setTimeout(function () {
+                        savePoint = true
+                    }, 1500);
+                }
             }
-            else if(currentDataIndex==3){
+
+            if(currentDataIndex==9){
                 //we need to calculate our basis !
-                var distanceX=Math.sqrt(Math.pow(points[1].x-points[0].x,2)+Math.pow(points[1].y-points[0].y,2));
-                $("#infos").append("ratio pixel/mm axes X: "+distanceX+"/4 ="+distanceX/4+"<br/>");
+                var meanDistanceX=0;
+                for(var i=1; i<=4; i++)
+                {
+                    var distanceX=Math.sqrt(Math.pow(points[i].x-points[i-1].x,2)+Math.pow(points[i].y-points[i-1].y,2));
+                    meanDistanceX+=distanceX;
+                    $("#infos").append(i+": ratio pixel/mm axes X: "+distanceX+"<br/>");
+                }
+                meanDistanceX=meanDistanceX/4;
+                $("#infos").append("moyenne: ratio pixel/mm axes X: "+meanDistanceX+"<br/><br/>");
 
-                var distanceY=Math.sqrt(Math.pow(points[2].x-points[1].x,2)+Math.pow(points[2].y-points[1].y,2));
-                $("#infos").append("ratio pixel/mm axes Y: "+distanceY+"/4 ="+distanceY/4+"<br/>");
+                var meanDistanceY=0;
+                for(var i=5; i<=8; i++)
+                {
+                    var distanceY=Math.sqrt(Math.pow(points[i].x-points[i-1].x,2)+Math.pow(points[i].y-points[i-1].y,2));
+                    meanDistanceY+=distanceY;
+                    $("#infos").append(i+": ratio pixel/mm axes Y: "+distanceY+"<br/>");
+                }
+                meanDistanceY=meanDistanceY/4;
+                $("#infos").append("moyenne: ratio pixel/mm axes Y: "+meanDistanceY+"<br/><br/>");
 
-                $("#infos").append("deviation y pixel/mm axes X: "+(points[1].x-points[0].x)+"/4 ="+(points[1].x-points[0].x)/4+"<br/>");
+                var meanDeviationY=0;
+                for(var i=1; i<=4; i++)
+                {
+                    meanDeviationY+=(points[i].x-points[i-1].x);
+                    $("#infos").append("deviation y pixel/mm axes X: "+(points[i].x-points[i-1].x)+"<br/>");
+                }
+                meanDeviationY=meanDeviationY/4;
 
-                $("#infos").append("deviation x pixel/mm axes Y: "+(points[2].y-points[1].y)+"/4 ="+(points[2].y-points[1].y)/4+"<br/>");
+                $("#infos").append("mean deviation y pixel/mm axes X: "+meanDeviationY+"<br/>");
+                $("#infos").append("angle deviation: "+Math.atan(meanDeviationY/meanDistanceX)*180/Math.PI+"°<br/><br/>");
 
+                var meanDeviationX=0;
+                for(var i=5; i<=8; i++)
+                {
+                    meanDeviationX+=(points[i].y-points[i-1].y);
+                    $("#infos").append("deviation y pixel/mm axes X: "+(points[i].y-points[i-1].y)+"<br/>");
+                }
+                meanDeviationX=meanDeviationX/4;
+                $("#infos").append("mean deviation x pixel/mm axes Y: "+meanDeviationX+"<br/>");
+
+                //go back to beginning position
+                socket.emit("moveRelative", {x: 4, y: -4});
             }
         }
         setTimeout(function(){calibration();}, 100);
@@ -304,7 +358,7 @@ $(document).ready(function() {
     var points=[];
     function calibrationPulley(){
         //if we have more than 50 points
-        if(data[currentDataIndex].x.length>100)
+        if(data[currentDataIndex].x.length>40)
         {
             //we stopped saving points
             savePoint=false;
@@ -314,8 +368,6 @@ $(document).ready(function() {
 
             $("#infos").append(points[currentDataIndex].x+";"+points[currentDataIndex].y+"<br/>");
 
-            //we draw the graph
-            Plotly.newPlot('chart', data);
 
             //we add a new data cell for the graph
             data.push({
@@ -327,10 +379,31 @@ $(document).ready(function() {
 
             //we need to change our location: (X translation)
 
-            if(currentDataIndex==1)
-            {
-                socket.emit("moveRelative", {x:-4,y:0});
-                setTimeout(function(){savePoint=true}, 1500);
+            for(var i=1; i<=20; i++) {
+                if (currentDataIndex == i) {
+
+                    //we draw the distances beetween old points:
+                    var toDraw={
+                        x: [],
+                        y: [],
+                        mode: 'markers',
+                        type: 'scatter'};
+
+                    for(var i=1; i<currentDataIndex; i++)
+                    {
+                        toDraw.y.push(distance(points[i-1], points[i]));
+                        toDraw.x.push(i);
+                    }
+
+                    //we draw the graph
+                    if(toDraw.x.length>0)
+                    Plotly.newPlot('chart', [toDraw]);
+
+                    socket.emit("moveRelativeX", -0.25);
+                    setTimeout(function () {
+                        savePoint = true
+                    }, 1500);
+                }
             }
         }
         setTimeout(function(){calibrationPulley();}, 100);
@@ -350,6 +423,11 @@ $(document).ready(function() {
         yMean=yMean/number;
 
         return {x:xMean, y:yMean};
+    }
+
+    function distance(point1, point2)
+    {
+        return Math.sqrt(Math.pow(point1.x-point2.x, 2)+Math.pow(point1.y-point2.y, 2));
     }
 });
 
